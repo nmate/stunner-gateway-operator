@@ -1,6 +1,6 @@
 ###########
 # Build the manager binary
-FROM golang:1.25-alpine AS builder
+FROM golang:1.25-alpine as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -38,5 +38,6 @@ FROM gcr.io/distroless/static:nonroot
 WORKDIR /
 COPY --from=builder /workspace/bin/manager .
 USER 65532:65532
+EXPOSE 6060
 
 ENTRYPOINT ["/manager"]

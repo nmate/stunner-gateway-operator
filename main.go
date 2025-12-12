@@ -27,6 +27,8 @@ import (
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"net/http"
+	_ "net/http/pprof"
 
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -73,6 +75,13 @@ func init() {
 	utilruntime.Must(gwapiv1.AddToScheme(scheme))        //nolint:staticcheck
 	utilruntime.Must(stnrgwv1a1.AddToScheme(scheme))     //nolint:staticcheck
 	utilruntime.Must(stnrgwv1.AddToScheme(scheme))       //nolint:staticcheck
+}
+
+func startPprof() {
+    go func() {
+        //log.Println("Starting pprof on :6060")
+        http.ListenAndServe("0.0.0.0:6060", nil)
+    }()
 }
 
 func main() {
@@ -132,6 +141,13 @@ func main() {
 
 	config.DataplaneMode = config.NewDataplaneMode(dataplaneMode)
 	setupLog.Info("dataplane mode", "mode", config.DataplaneMode.String())
+
+	pprofSet := os.Getenv("ENABLE_PPROF")
+	if pprofSet == "true" {
+		setupLog.Info("Enabling pprof", "status", pprofSet)
+		startPprof()
+	 }
+
 
 	customerKey, keyStatus := "", "MISSING"
 	if key, ok := os.LookupEnv(envVarCustomerKey); ok && key != "" {
